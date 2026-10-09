@@ -18,16 +18,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.minimal.carlauncher.ui.dialogs.AboutDialog
-import com.minimal.carlauncher.ui.dialogs.AddressSearchDialog
-import com.minimal.carlauncher.ui.dialogs.AppPickerDialog
-import com.minimal.carlauncher.ui.dialogs.DiagnosticsDialog
-import com.minimal.carlauncher.ui.dialogs.DockActionDialog
-import com.minimal.carlauncher.ui.dialogs.DrawerActionDialog
-import com.minimal.carlauncher.ui.drawer.AppDrawerDialog
+import com.minimal.carlauncher.ui.home.HomeOverlays
 import com.minimal.carlauncher.ui.theme.CarBg
 import com.minimal.carlauncher.ui.viewmodel.LauncherViewModel
 
+/**
+ * Legacy map dashboard (circular map, radio card, speedometer). No longer the home screen —
+ * kept for reference; [com.minimal.carlauncher.ui.home.HomeScreen] replaces it.
+ */
 @Composable
 fun DashboardScreen(
     viewModel: LauncherViewModel,
@@ -192,107 +190,6 @@ fun DashboardScreen(
             }
         }
 
-        // Overlay All Apps Drawer
-        AppDrawerDialog(
-            isOpen = isDrawerOpen,
-            apps = filteredApps,
-            searchQuery = searchQuery,
-            onSearchChange = { viewModel.onSearchQueryChange(it) },
-            onAppClick = { app -> viewModel.launchApp(app) },
-            onAppLongClick = { app -> viewModel.onDrawerAppLongClick(app) },
-            onClose = { viewModel.closeAppDrawer() }
-        )
-
-        // Dock Long-Press Action Dialog (Remove or Replace)
-        DockActionDialog(
-            app = selectedDockApp,
-            onReplace = { viewModel.openReplacePicker() },
-            onRemove = { selectedDockApp?.let { viewModel.removeDockApp(it) } },
-            onDismiss = { viewModel.dismissDockActionDialog() }
-        )
-
-        // App Picker Dialog (when Replace is chosen for dock)
-        AppPickerDialog(
-            isOpen = isReplacePickerOpen,
-            apps = allApps,
-            title = "Choose App to Place in Bottom Bar",
-            onAppSelected = { newApp -> viewModel.replaceDockAppWith(newApp) },
-            onDismiss = { viewModel.closeReplacePicker() }
-        )
-
-        // App Picker Dialog (when + is clicked to add to bottom bar)
-        AppPickerDialog(
-            isOpen = isAddDockPickerOpen,
-            apps = allApps.filter { app -> pinnedApps.none { it.packageName == app.packageName } },
-            title = "Add App to Bottom Bar",
-            onAppSelected = { newApp -> viewModel.addDockApp(newApp) },
-            onDismiss = { viewModel.closeAddDockPicker() }
-        )
-
-        // Navigation App Picker Dialog (when Navigation tile is long-pressed)
-        AppPickerDialog(
-            isOpen = isNavPickerOpen,
-            apps = allApps,
-            title = "Select Default Navigation App",
-            onAppSelected = { app -> viewModel.selectNavigationApp(app) },
-            onDismiss = { viewModel.closeNavPicker() }
-        )
-
-        // Music App Picker Dialog (when Music tile is long-pressed)
-        AppPickerDialog(
-            isOpen = isMusicPickerOpen,
-            apps = allApps,
-            title = "Select Default Music App",
-            onAppSelected = { app -> viewModel.selectMusicApp(app) },
-            onDismiss = { viewModel.closeMusicPicker() }
-        )
-
-        // Dashcam / DVR App Picker Dialog (when Dashcam card is long-pressed)
-        AppPickerDialog(
-            isOpen = isDvrPickerOpen,
-            apps = allApps,
-            title = "Select Dashcam / DVR App",
-            onAppSelected = { app -> viewModel.selectDvrApp(app) },
-            onDismiss = { viewModel.closeDvrPicker() }
-        )
-
-        // Drawer Long-Press Action Dialog (Add to Bottom Bar)
-        DrawerActionDialog(
-            app = selectedDrawerApp,
-            onAddToDock = { selectedDrawerApp?.let { viewModel.pinDrawerAppToDock(it) } },
-            onDismiss = { viewModel.dismissDrawerActionDialog() }
-        )
-
-        // About App & Software Update Dialog
-        AboutDialog(
-            isOpen = isAboutDialogOpen,
-            currentVersion = currentVersion,
-            updateInfo = updateInfo,
-            isCheckingUpdate = isCheckingUpdate,
-            downloadProgress = updateProgress,
-            onCheckUpdate = { viewModel.checkForUpdates(isManualCheck = true) },
-            onInstall = { viewModel.startDownloadAndInstall() },
-            onDismiss = { viewModel.dismissAboutDialog() },
-            isDarkMode = isDarkMode,
-            onToggleDarkMode = { viewModel.toggleDarkMode() }
-        )
-
-        // System & Radio Diagnostics Dialog (Long-press Settings)
-        DiagnosticsDialog(
-            isOpen = isDiagnosticsDialogOpen,
-            onDismiss = { viewModel.dismissDiagnosticsDialog() },
-            viewModel = viewModel
-        )
-
-        // Address Search Autocomplete Dialog
-        AddressSearchDialog(
-            isOpen = isSearchDialogOpen,
-            currentLat = currentLocation?.latitude ?: 37.9838,
-            currentLon = currentLocation?.longitude ?: 23.7275,
-            onSelectDestination = { lat, lon, name ->
-                viewModel.startNavigationTo(lat, lon, name)
-            },
-            onDismiss = { viewModel.closeAddressSearch() }
-        )
+        HomeOverlays(viewModel)
     }
 }

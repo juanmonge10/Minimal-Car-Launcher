@@ -21,41 +21,48 @@ data class CarColors(
     val isDark: Boolean
 )
 
-// Luxury automotive obsidian backdrop with deep velvet undertone (Night Mode)
+// Neutral, CarPlay-inspired night palette: true black backdrop, graphite surfaces
 val DarkCarColors = CarColors(
-    bg = Color(0xFF0A0E17),
-    surface = Color(0xFF131926),
-    surfaceVariant = Color(0xFF1C2436),
-    border = Color(0xFF263248),
-    textPrimary = Color(0xFFF8FAFC),
-    textSecondary = Color(0xFF94A3B8),
-    textMuted = Color(0xFF64748B),
-    accentCyan = Color(0xFF00D2EE),
-    accentAmber = Color(0xFFF59E0B),
-    accentGreen = Color(0xFF10B981),
-    accentZLink = Color(0xFF10B981),
-    accentBlue = Color(0xFF38BDF8),
-    accentRed = Color(0xFFF43F5E),
+    bg = Color(0xFF000000),
+    surface = Color(0xFF1C1C1E),
+    surfaceVariant = Color(0xFF2C2C2E),
+    border = Color(0xFF38383A),
+    textPrimary = Color(0xFFF2F2F7),
+    textSecondary = Color(0xFFAEAEB2),
+    textMuted = Color(0xFF8E8E93),
+    accentCyan = Color(0xFF0A84FF),
+    accentAmber = Color(0xFFFF9F0A),
+    accentGreen = Color(0xFF30D158),
+    accentZLink = Color(0xFF30D158),
+    accentBlue = Color(0xFF0A84FF),
+    accentRed = Color(0xFFFF453A),
     isDark = true
 )
 
-// Bright, high-contrast, non-boring automotive daylight palette (Day Mode)
+// Neutral, CarPlay-inspired day palette: soft grey backdrop, white surfaces, high-contrast text
 val LightCarColors = CarColors(
-    bg = Color(0xFFF1F5F9),             // Crisp ice-pearl ambient backdrop
-    surface = Color(0xFFFFFFFF),        // Brilliant white porcelain instrument cards
-    surfaceVariant = Color(0xFFE2E8F0), // Slate 200 elevated chips, search fields, containers
-    border = Color(0xFFCBD5E1),         // Slate 300 razor-sharp structural borders
-    textPrimary = Color(0xFF0F172A),    // Slate 900 maximum optical contrast in direct sunlight
-    textSecondary = Color(0xFF475569),  // Slate 600 secondary information
-    textMuted = Color(0xFF64748B),      // Slate 500 tertiary labels
-    accentCyan = Color(0xFF0284C7),     // Vivid electric azure / sky 600 (rich contrast on white)
-    accentAmber = Color(0xFFD97706),    // Rich warm amber-gold 600
-    accentGreen = Color(0xFF059669),    // Deep emerald racing green 600
-    accentZLink = Color(0xFF059669),    // Crisp CarPlay / Android Auto green
-    accentBlue = Color(0xFF2563EB),     // Striking cobalt sapphire for navigation
-    accentRed = Color(0xFFE11D48),      // Crimson ruby for recordings and warnings
+    bg = Color(0xFFF2F2F7),
+    surface = Color(0xFFFFFFFF),
+    surfaceVariant = Color(0xFFE5E5EA),
+    border = Color(0xFFD1D1D6),
+    textPrimary = Color(0xFF1C1C1E),
+    textSecondary = Color(0xFF3C3C43),
+    textMuted = Color(0xFF6C6C70),
+    accentCyan = Color(0xFF007AFF),
+    accentAmber = Color(0xFFC93400),
+    accentGreen = Color(0xFF248A3D),
+    accentZLink = Color(0xFF248A3D),
+    accentBlue = Color(0xFF007AFF),
+    accentRed = Color(0xFFD70015),
     isDark = false
 )
+
+// Fixed home-screen tile colors (like app icons, identical in both themes; icons drawn in white)
+val TileGreen = Color(0xFF34C759)
+val TileBlue = Color(0xFF0A84FF)
+val TilePink = Color(0xFFFF2D55)
+val TileGraphite = Color(0xFF48484A)
+val TileOrange = Color(0xFFFF9500)
 
 val LocalCarColors = staticCompositionLocalOf { DarkCarColors }
 

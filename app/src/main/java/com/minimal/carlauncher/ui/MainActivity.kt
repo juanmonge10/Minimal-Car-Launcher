@@ -1,7 +1,5 @@
 package com.minimal.carlauncher.ui
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -9,28 +7,16 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.core.content.ContextCompat
-import com.minimal.carlauncher.ui.dashboard.DashboardScreen
+import com.minimal.carlauncher.ui.home.HomeScreen
 import com.minimal.carlauncher.ui.theme.CarLauncherTheme
 import com.minimal.carlauncher.ui.viewmodel.LauncherViewModel
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: LauncherViewModel by viewModels()
-
-    private val locationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
-        val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (fineGranted || coarseGranted) {
-            viewModel.speedometer.startTracking()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,16 +27,10 @@ class MainActivity : ComponentActivity() {
             e.printStackTrace()
         }
 
-        try {
-            checkAndRequestPermissions()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
         setContent {
             val isDarkMode by viewModel.isDarkMode.collectAsState()
             CarLauncherTheme(isDarkMode = isDarkMode) {
-                DashboardScreen(viewModel = viewModel)
+                HomeScreen(viewModel = viewModel)
             }
         }
     }
@@ -64,41 +44,12 @@ class MainActivity : ComponentActivity() {
         }
         viewModel.loadApps()
         viewModel.refreshRadio()
-        if (hasLocationPermission()) {
-            viewModel.speedometer.startTracking()
-        }
+        // GPS speedometer is no longer shown on the home screen, so location tracking is not started.
     }
 
     override fun onPause() {
         super.onPause()
         viewModel.speedometer.stopTracking()
-    }
-
-    private fun checkAndRequestPermissions() {
-        if (!hasLocationPermission()) {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
-    }
-
-    private fun hasLocationPermission(): Boolean {
-        return try {
-            val fine = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-            val coarse = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-            fine || coarse
-        } catch (e: Exception) {
-            false
-        }
     }
 
     private fun enableImmersiveMode() {

@@ -1,7 +1,6 @@
 package com.minimal.carlauncher.ui.drawer
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.minimal.carlauncher.data.AppInfo
+import com.minimal.carlauncher.ui.common.AppIconImage
 import com.minimal.carlauncher.ui.theme.AccentCyan
 import com.minimal.carlauncher.ui.theme.CarBg
 import com.minimal.carlauncher.ui.theme.CarBorder
@@ -50,7 +50,6 @@ import com.minimal.carlauncher.ui.theme.CarSurface
 import com.minimal.carlauncher.ui.theme.CarSurfaceVariant
 import com.minimal.carlauncher.ui.theme.TextMuted
 import com.minimal.carlauncher.ui.theme.TextPrimary
-import com.minimal.carlauncher.util.BitmapHelper
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -88,7 +87,7 @@ fun AppDrawerDialog(
                         onValueChange = onSearchChange,
                         placeholder = {
                             Text(
-                                text = "Search apps… (long-press an icon to pin to bottom bar)",
+                                text = "Buscar apps… (mantén pulsada una app para fijarla)",
                                 color = TextMuted,
                                 fontSize = 15.sp
                             )
@@ -96,7 +95,7 @@ fun AppDrawerDialog(
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
+                                contentDescription = "Buscar",
                                 tint = AccentCyan
                             )
                         },
@@ -126,7 +125,7 @@ fun AppDrawerDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
+                            contentDescription = "Cerrar",
                             tint = TextPrimary
                         )
                     }
@@ -134,9 +133,9 @@ fun AppDrawerDialog(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // App Grid (6 columns for 1080p landscape)
+                // App Grid (column count adapts to screen width: ~6 on 1024 px panels)
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(6),
+                    columns = GridCells.Adaptive(minSize = 140.dp),
                     contentPadding = PaddingValues(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -162,8 +161,6 @@ fun AppGridItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
-    val imageBitmap = BitmapHelper.safeDrawableToImageBitmap(app.icon, 96, 96)
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -183,20 +180,7 @@ fun AppGridItem(
                 .padding(10.dp),
             contentAlignment = Alignment.Center
         ) {
-            if (imageBitmap != null) {
-                Image(
-                    bitmap = imageBitmap,
-                    contentDescription = app.label,
-                    modifier = Modifier.size(48.dp)
-                )
-            } else {
-                Text(
-                    text = app.label.take(1).uppercase(),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AccentCyan
-                )
-            }
+            AppIconImage(app = app, size = 48.dp)
         }
 
         Spacer(modifier = Modifier.height(8.dp))

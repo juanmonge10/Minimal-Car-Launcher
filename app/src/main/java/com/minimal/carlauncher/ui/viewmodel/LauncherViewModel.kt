@@ -179,7 +179,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
             val secondsFormat = SimpleDateFormat("ss", Locale.getDefault())
-            val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
+            val dateFormat = SimpleDateFormat("EEEE, d MMM", Locale.getDefault())
 
             while (isActive) {
                 val now = Date()
