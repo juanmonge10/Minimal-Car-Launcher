@@ -1,47 +1,31 @@
-# Minimal Android Car Launcher (1080p + ZLink)
+# Minimal Car Launcher (edición juanmonge10)
 
-A lightweight, distraction-free, and high-contrast Android Home Launcher designed specifically for **1080p landscape built-in Android head units** with dedicated **ZLink (Android Auto / CarPlay)** integration, **customizable bottom dock**, and an **in-app GitHub updater**.
+Launcher Android minimalista, estilo CarPlay, para radios de coche Android en horizontal (pensado para 1024×600 y adaptable a otras resoluciones). Basado en [Breakeridis/Minimal-Car-Launcher](https://github.com/Breakeridis/Minimal-Car-Launcher).
 
----
+## Pantalla principal
 
-## Highlights & Features
+- **Barra lateral:** hora y fecha, cambio de tema claro/oscuro, *Acerca de* con buscador de actualizaciones (aparece un punto cuando hay una nueva), *Ajustes* (si lo mantienes pulsado abre el diagnóstico) y el botón **Todas las apps**.
+- **Cuadrícula de iconos:**
+  - **CarPlay**: abre ZLINK; si no lo encuentra, prueba los paquetes conocidos de ZLINK.
+  - **Mapas**, **Música** y **Dashcam**: si los mantienes pulsados, eliges qué app abre cada uno.
+  - Hasta 6 **favoritos**. Si mantienes pulsado uno, puedes quitarlo o reemplazarlo. Con **Añadir** fijas uno nuevo.
+- **Barra de radio:** muestra la emisora actual y tiene botones de anterior/siguiente y 4 presintonías (al tocar una, sintoniza; si la mantienes pulsada, guarda ahí la emisora actual). Al tocar la emisora se abre la radio del equipo; si la mantienes pulsada, ves el diagnóstico.
 
-- **Automotive Ergonomics**: High-contrast, dark OLED-friendly palette tailored for 1080p in-dash screens.
-- **Dedicated ZLink / Android Auto Tile**: Auto-detects your head unit's ZLink installation (`com.zjinnova.zlink`, `com.xyauto.zlink`, etc.) and launches Android Auto in one tap.
-- **Real-Time GPS Speedometer**: Displays vehicle speed with animated gauge arc and one-tap switching between **KM/H** and **MPH**.
-- **Glanceable Digital Clock**: Large digital clock, seconds indicator, and localized day/date.
-- **Customizable Bottom Dock**:
-  - **Long-Press Any Icon**: Choose to **Remove** it or **Replace** it with another installed app.
-  - Pinned apps are automatically saved across reboots and power cycles.
-- **All Apps Drawer with Pinning**:
-  - Open All Apps and **long-press any app** to quickly pin it to the bottom bar.
-  - 6-column grid with instant search filtering.
-- **Direct In-App GitHub Updater**:
-  - Tap the update icon on the bottom dock to fetch new releases directly from this GitHub repository.
-  - Downloads the latest APK with real-time progress and triggers the Android system installer.
-- **Zero Local Installs Needed**: Automated GitHub Actions CI workflow compiles `app-debug.apk` and publishes releases in the cloud.
+## Cajón de apps
 
----
+Búsqueda instantánea y cuadrícula que se adapta al ancho de la pantalla. Si mantienes pulsada una app, puedes fijarla en favoritos.
 
-## How to Build the APK via GitHub Actions (Cloud Build)
+## Compilar (GitHub Actions)
 
-Whenever you push to `main`, GitHub Actions automatically compiles the APK and creates a new GitHub Release:
+- Cada push a `main` compila `app-debug.apk` y publica una Release `v1.0.<n>`.
+- Para compilar una rama sin publicar Release, usa *Actions → Build Car Launcher APK → Run workflow*.
+- El APK de depuración se instala con el ID `com.juanmonge.carlauncher.debug`.
 
-1. Go to your repository on GitHub: `https://github.com/Breakeridis/Minimal-Car-Launcher`
-2. Click on **"Releases"** (on the right sidebar) or the **"Actions"** tab.
-3. Download `app-debug.apk` from the latest release.
+## Instalar en la radio
 
----
+1. Descarga `app-debug.apk` desde [Releases](https://github.com/juanmonge10/Minimal-Car-Launcher/releases).
+2. Instálalo desde el gestor de archivos de la radio.
+3. Pulsa **Inicio**, elige **Car Launcher** y marca **Siempre**.
+4. Las siguientes versiones se instalan desde **Acerca de → Buscar actualizaciones**.
 
-## How to Install on Your Head Unit or Phone
-
-1. **Copy to USB**:
-   - Copy `app-debug.apk` onto a USB flash drive (or download it directly on your phone).
-2. **Install**:
-   - Open your head unit's **File Manager** (or phone Files app) and tap `app-debug.apk` to install.
-3. **Set as Default Launcher (on Car)**:
-   - Press the physical or on-screen **Home** button on your car unit.
-   - Select **Car Launcher** and tap **"Always"**.
-   - *(On a phone: tap "Just Once" to keep your standard phone launcher default).*
-4. **Future Updates**:
-   - Once installed, you can simply tap the **Update** icon on the bottom dock to fetch and install new versions directly!
+La arquitectura está documentada en [docs/ANALISIS_ARQUITECTURA.md](docs/ANALISIS_ARQUITECTURA.md).
