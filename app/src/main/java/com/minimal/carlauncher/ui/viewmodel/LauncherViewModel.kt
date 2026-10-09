@@ -39,6 +39,20 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     val radioStation: StateFlow<String?> = radioManager.radioStation
     val isRadioActive: StateFlow<Boolean> = radioManager.isRadioActive
     val savedRadioStations: StateFlow<List<String>> = radioManager.savedStations
+    val radioPresetNames: StateFlow<List<String>> = radioManager.presetNames
+
+    // Built-in radio screen & radio app preferences
+    private val _isRadioScreenOpen = MutableStateFlow(false)
+    val isRadioScreenOpen: StateFlow<Boolean> = _isRadioScreenOpen.asStateFlow()
+
+    private val _useBuiltInRadio = MutableStateFlow(repository.isBuiltInRadioEnabled())
+    val useBuiltInRadio: StateFlow<Boolean> = _useBuiltInRadio.asStateFlow()
+
+    private val _radioApp = MutableStateFlow<AppInfo?>(null)
+    val radioApp: StateFlow<AppInfo?> = _radioApp.asStateFlow()
+
+    private val _isRadioPickerOpen = MutableStateFlow(false)
+    val isRadioPickerOpen: StateFlow<Boolean> = _isRadioPickerOpen.asStateFlow()
 
     // Applications State
     private val _allApps = MutableStateFlow<List<AppInfo>>(emptyList())
@@ -164,6 +178,9 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             val nav = repository.resolveNavApp(apps)
             val music = repository.resolveMusicApp(apps)
             val dvr = repository.resolveDvrApp(apps)
+            val radio = repository.getCustomRadioPackage()?.let { pkg ->
+                apps.firstOrNull { it.packageName == pkg }
+            }
 
             _allApps.value = apps
             _pinnedApps.value = pinned
@@ -171,6 +188,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             _navigationApp.value = nav
             _musicApp.value = music
             _dvrApp.value = dvr
+            _radioApp.value = radio
             hasAutoStartedDvr = true
         }
     }
@@ -502,34 +520,73 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         repository.launchNavigationToCoordinates(latitude, longitude)
     }
 
+    // Native head unit radio apps, tried in order when no custom radio app is chosen
+    private val radioAppPackages = listOf(
+        "com.nwd.radio",
+        "com.nwd.link.radio",
+        "com.android.fmradio",
+        "com.allwinner.radio",
+        "com.qf.radio",
+        "com.navimods.radio"
+    )
+
+    private fun tryLaunchRadioApp(): Boolean {
+        _radioApp.value?.let { if (repository.launchApp(it)) return true }
+        return radioAppPackages.any { repository.launchPackage(it) }
+    }
+
     fun launchMusic() {
-        val currentStation = radioStation.value
-        val radioPkgs = listOf(
-            "com.nwd.radio",
-            "com.nwd.link.radio",
-            "com.android.fmradio",
-            "com.allwinner.radio",
-            "com.qf.radio",
-            "com.navimods.radio"
-        )
-        // If radio station is active, prioritize launching native headunit radio app
-        if (!currentStation.isNullOrBlank()) {
-            for (pkg in radioPkgs) {
-                if (repository.launchPackage(pkg)) return
-            }
-        }
+        // If radio station is active, prioritize launching the radio app
+        if (!radioStation.value.isNullOrBlank() && tryLaunchRadioApp()) return
 
         val music = _musicApp.value
         if (music != null) {
             repository.launchApp(music)
         } else {
-            for (pkg in radioPkgs) {
-                if (repository.launchPackage(pkg)) return
-            }
+            if (tryLaunchRadioApp()) return
             if (!repository.launchPackage("com.spotify.music")) {
                 openAppDrawer()
             }
         }
+    }
+
+    /** Opens the external radio app (custom choice first, then known head unit radio apps). */
+    fun launchRadioApp() {
+        if (!tryLaunchRadioApp()) launchMusic()
+    }
+
+    /** Tap on the home radio bar: built-in radio screen or external radio app, per user preference. */
+    fun onRadioBarClick() {
+        if (_useBuiltInRadio.value) openRadioScreen() else launchRadioApp()
+    }
+
+    fun openRadioScreen() {
+        _isRadioScreenOpen.value = true
+        refreshRadio()
+    }
+
+    fun closeRadioScreen() {
+        _isRadioScreenOpen.value = false
+    }
+
+    fun setUseBuiltInRadio(enabled: Boolean) {
+        _useBuiltInRadio.value = enabled
+        repository.setBuiltInRadioEnabled(enabled)
+    }
+
+    fun openRadioPicker() {
+        _isRadioPickerOpen.value = true
+    }
+
+    fun closeRadioPicker() {
+        _isRadioPickerOpen.value = false
+    }
+
+    fun selectRadioApp(app: AppInfo) {
+        repository.setCustomRadioPackage(app.packageName)
+        _radioApp.value = app
+        _isRadioPickerOpen.value = false
+        Toast.makeText(getApplication(), "App de radio: ${app.label}", Toast.LENGTH_SHORT).show()
     }
 
     fun launchSettings() {
@@ -564,7 +621,20 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun tuneToSavedStation(station: String, index: Int) {
-        radioManager.tuneToStation(station, index)
+        if (station.isBlank()) return
+        // Only the first 4 slots mirror the head unit's own presets; the rest tune by frequency only
+        radioManager.tuneToStation(station, if (index < 4) index else -1)
+    }
+
+    /** Fine-tunes the current FM frequency by [deltaMHz] (e.g. ±0.1). Ignored for AM or unknown frequency. */
+    fun fineTuneFm(deltaMHz: Double) {
+        val current = radioStation.value
+            ?.substringBefore("•")
+            ?.replace(Regex("[^0-9.]"), "")
+            ?.toDoubleOrNull() ?: return
+        if (current !in 64.0..108.0) return
+        val next = (current + deltaMHz).coerceIn(87.5, 108.0)
+        radioManager.tuneToStation(String.format(Locale.US, "%.1f", next), -1)
     }
 
     fun saveCurrentStationToPreset(index: Int) {

@@ -46,6 +46,9 @@ class RadioManager(private val context: Context) {
     private val _savedStations = MutableStateFlow<List<String>>(repository.getSavedRadioStations())
     val savedStations: StateFlow<List<String>> = _savedStations.asStateFlow()
 
+    private val _presetNames = MutableStateFlow<List<String>>(repository.getRadioPresetNames())
+    val presetNames: StateFlow<List<String>> = _presetNames.asStateFlow()
+
     private var isMonitoring = false
     private var pollingJob: Job? = null
 
@@ -596,9 +599,13 @@ class RadioManager(private val context: Context) {
      * Broadcasts tune / seek previous commands across NWD, QF, Allwinner and automotive HAL daemons.
      */
     fun savePreset(index: Int, station: String) {
-        val clean = station.replace(" FM", "").replace(" AM", "").trim()
-        repository.setSavedRadioStation(index, clean)
+        // Station text looks like "95.2 FM • RDS NAME"; store frequency and name separately
+        val parts = station.split("•").map { it.trim() }
+        val clean = parts.first().replace(" FM", "").replace(" AM", "").trim()
+        val name = parts.getOrNull(1).orEmpty()
+        repository.setSavedRadioStation(index, clean, name)
         _savedStations.value = repository.getSavedRadioStations()
+        _presetNames.value = repository.getRadioPresetNames()
     }
 
     private val cachedDynamicReceivers = mutableListOf<ComponentName>()

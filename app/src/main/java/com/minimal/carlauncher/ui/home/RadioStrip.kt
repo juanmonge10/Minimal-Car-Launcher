@@ -45,7 +45,8 @@ import com.minimal.carlauncher.ui.theme.TileOrange
 
 /**
  * Compact single-row radio control replacing the old large radio card.
- * Tap the station to open the head unit radio, long-press for the tuner diagnostic.
+ * Tap the station to open the radio (built-in screen or external app, per preference);
+ * long-press always opens the built-in radio screen.
  * Presets: tap to tune, long-press to store the current frequency (hidden on narrow screens).
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -55,7 +56,7 @@ fun RadioStrip(
     isRadioActive: Boolean,
     presets: List<String>,
     onOpenRadio: () -> Unit,
-    onShowDiagnostic: () -> Unit,
+    onLongPress: () -> Unit,
     onTunePrevious: () -> Unit,
     onTuneNext: () -> Unit,
     onSelectPreset: (String, Int) -> Unit,
@@ -69,7 +70,9 @@ fun RadioStrip(
     val isOnAir = frequency != null || isRadioActive
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val showPresets = maxWidth >= 600.dp && presets.isNotEmpty()
+        // First 4 non-empty presets (index kept so tuning/saving hits the right slot)
+        val quickPresets = presets.take(4).withIndex().filter { it.value.isNotBlank() }
+        val showPresets = maxWidth >= 600.dp && quickPresets.isNotEmpty()
 
         Row(
             modifier = Modifier
@@ -87,7 +90,7 @@ fun RadioStrip(
                     .fillMaxHeight()
                     .padding(vertical = 6.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .combinedClickable(onClick = onOpenRadio, onLongClick = onShowDiagnostic)
+                    .combinedClickable(onClick = onOpenRadio, onLongClick = onLongPress)
                     .padding(horizontal = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -134,7 +137,7 @@ fun RadioStrip(
             }
 
             if (showPresets) {
-                presets.take(4).forEachIndexed { index, preset ->
+                quickPresets.forEach { (index, preset) ->
                     val isCurrent = frequency != null && frequency.startsWith(preset)
                     Box(
                         modifier = Modifier

@@ -28,7 +28,12 @@ class AppRepository(private val context: Context) {
         private const val KEY_DVR_AUTOSTART_ENABLED = "key_dvr_autostart_enabled"
         private const val KEY_MAP_DARK_MODE = "key_map_dark_mode"
         private const val KEY_DARK_MODE = "key_dark_mode"
+        private const val KEY_RADIO_PRESETS = "key_saved_radio_stations_v2"
+        private const val KEY_RADIO_PRESET_NAMES = "key_radio_preset_names_v1"
+        private const val KEY_CUSTOM_RADIO_PACKAGE = "key_custom_radio_package"
+        private const val KEY_USE_BUILTIN_RADIO = "key_use_builtin_radio"
         const val MAX_DOCK_APPS = 6
+        const val MAX_RADIO_PRESETS = 12
     }
 
     // Known ZLink package signatures found on Android head units
@@ -462,37 +467,61 @@ class AppRepository(private val context: Context) {
         }
     }
 
+    /**
+     * Radio presets: always [MAX_RADIO_PRESETS] entries, "" for an empty slot.
+     * The first 4 slots keep their historical defaults when nothing was ever saved.
+     */
     fun getSavedRadioStations(): List<String> {
-        val raw = prefs.getString("key_saved_radio_stations_v2", null)
+        val defaults = listOf("88.6", "95.2", "98.5", "103.7")
+        val raw = prefs.getString(KEY_RADIO_PRESETS, null)
             ?: prefs.getString("key_saved_radio_stations_v1", null)
-        val defaultList = listOf("88.6", "95.2", "98.5", "103.7")
-        if (!raw.isNullOrBlank()) {
-            try {
-                val array = JSONArray(raw)
-                val list = mutableListOf<String>()
-                for (i in 0 until array.length()) {
-                    list.add(array.getString(i))
-                }
-                if (list.isNotEmpty()) {
-                    while (list.size < 4 && list.size < defaultList.size) {
-                        list.add(defaultList[list.size])
-                    }
-                    return list.take(4)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+        val saved = readJsonList(raw)
+        val base = if (saved.isNotEmpty()) saved else defaults
+        return List(MAX_RADIO_PRESETS) { i ->
+            base.getOrNull(i)?.takeIf { it != "--.-" } ?: ""
         }
-        return defaultList
     }
 
-    fun setSavedRadioStation(index: Int, station: String) {
-        val current = getSavedRadioStations().toMutableList()
-        while (current.size < 4) current.add("--.-")
-        if (index in 0 until 4) {
-            current[index] = station
-            val array = JSONArray(current)
-            prefs.edit().putString("key_saved_radio_stations_v2", array.toString()).apply()
+    /** RDS names captured when each preset was stored ("" when unknown). */
+    fun getRadioPresetNames(): List<String> {
+        val saved = readJsonList(prefs.getString(KEY_RADIO_PRESET_NAMES, null))
+        return List(MAX_RADIO_PRESETS) { i -> saved.getOrNull(i) ?: "" }
+    }
+
+    fun setSavedRadioStation(index: Int, station: String, name: String = "") {
+        if (index !in 0 until MAX_RADIO_PRESETS) return
+        val stations = getSavedRadioStations().toMutableList()
+        val names = getRadioPresetNames().toMutableList()
+        stations[index] = station
+        names[index] = name
+        prefs.edit()
+            .putString(KEY_RADIO_PRESETS, JSONArray(stations).toString())
+            .putString(KEY_RADIO_PRESET_NAMES, JSONArray(names).toString())
+            .apply()
+    }
+
+    private fun readJsonList(raw: String?): List<String> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return try {
+            val array = JSONArray(raw)
+            List(array.length()) { i -> array.optString(i, "") }
+        } catch (e: Exception) {
+            emptyList()
         }
+    }
+
+    // --- Radio app preferences ---
+
+    fun getCustomRadioPackage(): String? = prefs.getString(KEY_CUSTOM_RADIO_PACKAGE, null)
+
+    fun setCustomRadioPackage(packageName: String) {
+        prefs.edit().putString(KEY_CUSTOM_RADIO_PACKAGE, packageName).apply()
+    }
+
+    /** When true, tapping the radio bar opens the launcher's own radio screen. */
+    fun isBuiltInRadioEnabled(): Boolean = prefs.getBoolean(KEY_USE_BUILTIN_RADIO, false)
+
+    fun setBuiltInRadioEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_USE_BUILTIN_RADIO, enabled).apply()
     }
 }

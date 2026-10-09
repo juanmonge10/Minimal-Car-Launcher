@@ -10,6 +10,7 @@ import com.minimal.carlauncher.ui.dialogs.DiagnosticsDialog
 import com.minimal.carlauncher.ui.dialogs.DockActionDialog
 import com.minimal.carlauncher.ui.dialogs.DrawerActionDialog
 import com.minimal.carlauncher.ui.drawer.AppDrawerDialog
+import com.minimal.carlauncher.ui.radio.RadioScreen
 import com.minimal.carlauncher.ui.viewmodel.LauncherViewModel
 
 /**
@@ -40,6 +41,44 @@ fun HomeOverlays(viewModel: LauncherViewModel) {
     val updateInfo by viewModel.updateInfo.collectAsState()
     val updateProgress by viewModel.updateDownloadProgress.collectAsState()
     val isSearchDialogOpen by viewModel.isAddressSearchOpen.collectAsState()
+
+    val isRadioScreenOpen by viewModel.isRadioScreenOpen.collectAsState()
+    val isRadioPickerOpen by viewModel.isRadioPickerOpen.collectAsState()
+    val radioStation by viewModel.radioStation.collectAsState()
+    val isRadioActive by viewModel.isRadioActive.collectAsState()
+    val radioPresets by viewModel.savedRadioStations.collectAsState()
+    val radioPresetNames by viewModel.radioPresetNames.collectAsState()
+    val useBuiltInRadio by viewModel.useBuiltInRadio.collectAsState()
+    val radioApp by viewModel.radioApp.collectAsState()
+
+    // Launcher's own radio screen (drawn first so pickers opened from it appear on top)
+    RadioScreen(
+        isOpen = isRadioScreenOpen,
+        radioStation = radioStation,
+        isRadioActive = isRadioActive,
+        presets = radioPresets,
+        presetNames = radioPresetNames,
+        useAsDefault = useBuiltInRadio,
+        externalAppLabel = radioApp?.label,
+        onUseAsDefaultChange = { viewModel.setUseBuiltInRadio(it) },
+        onSeekPrevious = { viewModel.tunePreviousStation() },
+        onSeekNext = { viewModel.tuneNextStation() },
+        onFineTune = { viewModel.fineTuneFm(it) },
+        onSelectPreset = { station, index -> viewModel.tuneToSavedStation(station, index) },
+        onSavePreset = { index -> viewModel.saveCurrentStationToPreset(index) },
+        onOpenExternalApp = { viewModel.launchRadioApp() },
+        onChooseExternalApp = { viewModel.openRadioPicker() },
+        onShowDiagnostic = { viewModel.showRadioDiagnostic() },
+        onClose = { viewModel.closeRadioScreen() }
+    )
+
+    AppPickerDialog(
+        isOpen = isRadioPickerOpen,
+        apps = allApps,
+        title = "App de radio externa",
+        onAppSelected = { app -> viewModel.selectRadioApp(app) },
+        onDismiss = { viewModel.closeRadioPicker() }
+    )
 
     // All Apps Drawer
     AppDrawerDialog(
