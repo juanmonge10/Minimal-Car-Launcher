@@ -27,7 +27,11 @@ data class UpdateInfo(
 
 class UpdateManager(private val context: Context) {
 
-    private val releasesUrl = "https://api.github.com/repos/Breakeridis/Minimal-Car-Launcher/releases/latest"
+    companion object {
+        private const val GITHUB_REPO = "juanmonge10/Minimal-Car-Launcher"
+    }
+
+    private val releasesUrl = "https://api.github.com/repos/$GITHUB_REPO/releases/latest"
 
     fun getCurrentVersionName(): String {
         return try {
@@ -94,7 +98,7 @@ class UpdateManager(private val context: Context) {
     private fun fetchFromReleasesList(): UpdateInfo? {
         var connection: HttpURLConnection? = null
         return try {
-            val url = URL("https://api.github.com/repos/Breakeridis/Minimal-Car-Launcher/releases")
+            val url = URL("https://api.github.com/repos/$GITHUB_REPO/releases")
             connection = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
                 setRequestProperty("Accept", "application/vnd.github.v3+json")
