@@ -67,11 +67,12 @@ sealed interface HomeTile {
 }
 
 private val MinCellWidth = 128.dp
-private val LabelBlockHeight = 34.dp
-private val RowGap = 12.dp
+private val LabelBlockHeight = 38.dp
+private val RowGap = 24.dp
+private val MaxIconSize = 112.dp
 
 /**
- * Responsive CarPlay-like icon grid. Column count follows the available width and the icon
+ * Responsive CarPlay-like icon grid (up to 6 columns, rows centered). Column count follows the available width and the icon
  * size follows the available height, so the same layout works on 1024×600 and other panels.
  * Falls back to vertical scrolling if the tiles cannot fit.
  */
@@ -84,11 +85,11 @@ fun HomeAppGrid(
     modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(modifier = modifier) {
-        val columns = (maxWidth / MinCellWidth).toInt().coerceIn(3, 8)
+        val columns = (maxWidth / MinCellWidth).toInt().coerceIn(3, 6)
         val rows = ceil(tiles.size / columns.toFloat()).toInt().coerceAtLeast(1)
         val cellWidth = maxWidth / columns
         val cellHeight = (maxHeight - RowGap * (rows - 1)) / rows
-        val iconSize = minOf(cellHeight - LabelBlockHeight, cellWidth - 28.dp, 92.dp)
+        val iconSize = minOf(cellHeight - LabelBlockHeight, cellWidth - 28.dp, MaxIconSize)
             .coerceAtLeast(56.dp)
 
         Column(
@@ -151,7 +152,7 @@ private fun TileFrame(
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = label,
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
             color = TextPrimary,
             maxLines = 1,

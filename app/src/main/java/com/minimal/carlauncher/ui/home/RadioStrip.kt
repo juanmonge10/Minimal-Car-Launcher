@@ -66,6 +66,8 @@ fun RadioStrip(
     // Station text arrives as "95.2 FM • NAME" (name optional)
     val parts = radioStation?.split("•")?.map { it.trim() }
     val frequency = parts?.firstOrNull()?.takeIf { it.isNotBlank() }
+    val freqNumber = frequency?.substringBefore(" ")
+    val band = frequency?.substringAfter(" ", "")?.takeIf { it.isNotBlank() } ?: "FM"
     val stationName = parts?.getOrNull(1)?.takeIf { it.isNotBlank() }
     val isOnAir = frequency != null || isRadioActive
 
@@ -77,7 +79,7 @@ fun RadioStrip(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
+                .height(84.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(CarSurface)
                 .padding(horizontal = 8.dp),
@@ -96,8 +98,8 @@ fun RadioStrip(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(11.dp))
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(TileOrange),
                     contentAlignment = Alignment.Center
                 ) {
@@ -105,18 +107,31 @@ fun RadioStrip(
                         imageVector = Icons.Default.Radio,
                         contentDescription = "Radio",
                         tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(30.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(
-                        text = frequency ?: "Radio",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
-                        maxLines = 1
-                    )
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = freqNumber ?: "Radio",
+                            fontSize = 26.sp,
+                            lineHeight = 28.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                            maxLines = 1
+                        )
+                        if (freqNumber != null) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = band,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AccentCyan,
+                                modifier = Modifier.padding(bottom = 3.dp)
+                            )
+                        }
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
@@ -127,7 +142,7 @@ fun RadioStrip(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = stationName ?: if (isOnAir) "En el aire" else "Toca para abrir",
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             color = TextSecondary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -141,19 +156,19 @@ fun RadioStrip(
                     val isCurrent = frequency != null && frequency.startsWith(preset)
                     Box(
                         modifier = Modifier
-                            .height(44.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .height(52.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(if (isCurrent) AccentCyan else CarSurfaceVariant)
                             .combinedClickable(
                                 onClick = { onSelectPreset(preset, index) },
                                 onLongClick = { onSavePreset(index) }
                             )
-                            .padding(horizontal = 14.dp),
+                            .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = preset,
-                            fontSize = 15.sp,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Medium,
                             color = if (isCurrent) Color.White else TextPrimary,
                             maxLines = 1
@@ -173,7 +188,7 @@ fun RadioStrip(
 private fun RoundControl(icon: ImageVector, contentDescription: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(52.dp)
+            .size(60.dp)
             .clip(CircleShape)
             .background(CarSurfaceVariant)
             .clickable(onClick = onClick),
@@ -183,7 +198,7 @@ private fun RoundControl(icon: ImageVector, contentDescription: String, onClick:
             imageVector = icon,
             contentDescription = contentDescription,
             tint = TextPrimary,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(32.dp)
         )
     }
 }
