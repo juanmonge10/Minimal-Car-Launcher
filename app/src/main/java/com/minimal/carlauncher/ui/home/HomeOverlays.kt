@@ -66,6 +66,8 @@ fun HomeOverlays(viewModel: LauncherViewModel) {
         onFineTune = { viewModel.fineTuneFm(it) },
         onSelectPreset = { station, index -> viewModel.tuneToSavedStation(station, index) },
         onSavePreset = { index -> viewModel.saveCurrentStationToPreset(index) },
+        onRemovePreset = { index -> viewModel.removeRadioPreset(index) },
+        onAddPreset = { viewModel.addCurrentStationAsPreset() },
         onOpenExternalApp = { viewModel.launchRadioApp() },
         onChooseExternalApp = { viewModel.openRadioPicker() },
         onShowDiagnostic = { viewModel.showRadioDiagnostic() },

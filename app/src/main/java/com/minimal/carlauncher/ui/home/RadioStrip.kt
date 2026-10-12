@@ -70,8 +70,8 @@ fun RadioStrip(
     val isOnAir = frequency != null || isRadioActive
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        // First 4 non-empty presets (index kept so tuning/saving hits the right slot)
-        val quickPresets = presets.take(4).withIndex().filter { it.value.isNotBlank() }
+        // First 4 saved presets (index kept so tuning/saving hits the right slot)
+        val quickPresets = presets.withIndex().filter { it.value.isNotBlank() }.take(4)
         val showPresets = maxWidth >= 600.dp && quickPresets.isNotEmpty()
 
         Row(

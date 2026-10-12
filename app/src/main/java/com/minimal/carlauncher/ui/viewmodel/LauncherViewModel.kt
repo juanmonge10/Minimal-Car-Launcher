@@ -382,6 +382,24 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         )
     }
 
+    fun saveDiagnosticsReport() {
+        DiagnosticsManager.saveReportToDownloads(
+            getApplication(),
+            radioStation.value,
+            isRadioActive.value,
+            savedRadioStations.value
+        )
+    }
+
+    fun shareDiagnosticsReport() {
+        DiagnosticsManager.shareReport(
+            getApplication(),
+            radioStation.value,
+            isRadioActive.value,
+            savedRadioStations.value
+        )
+    }
+
     fun clearDiagnosticsLog() {
         DiagnosticsManager.clearEvents()
     }
@@ -642,6 +660,25 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         if (!current.isNullOrBlank()) {
             radioManager.savePreset(index, current)
         }
+    }
+
+    /** Stores the current station in the first empty preset slot. */
+    fun addCurrentStationAsPreset() {
+        val current = radioStation.value
+        if (current.isNullOrBlank()) {
+            Toast.makeText(getApplication(), "No hay emisora sonando para guardar", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val slot = savedRadioStations.value.indexOfFirst { it.isBlank() }
+        if (slot == -1) {
+            Toast.makeText(getApplication(), "Ya tienes 12 presintonías guardadas", Toast.LENGTH_SHORT).show()
+            return
+        }
+        radioManager.savePreset(slot, current)
+    }
+
+    fun removeRadioPreset(index: Int) {
+        radioManager.removePreset(index)
     }
 
     fun showRadioDiagnostic() {

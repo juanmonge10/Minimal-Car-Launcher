@@ -6,6 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.content.ContentValues
+import android.provider.MediaStore
+import androidx.core.content.FileProvider
+import java.io.File
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -414,6 +418,65 @@ object DiagnosticsManager {
         } catch (e: Throwable) {
             Toast.makeText(context, "Failed to copy: ${e.message}", Toast.LENGTH_SHORT).show()
             false
+        }
+    }
+
+    private fun reportFileName(): String =
+        "informe-radio-" + SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date()) + ".txt"
+
+    /** Saves the report as a .txt in the public Downloads folder (Android 10+, no permission needed). */
+    fun saveReportToDownloads(
+        context: Context,
+        radioStation: String?,
+        isRadioActive: Boolean,
+        presets: List<String>
+    ) {
+        try {
+            val report = buildFullReport(context, radioStation, isRadioActive, presets)
+            val name = reportFileName()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+                    put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, "Download")
+                }
+                val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                    ?: throw IllegalStateException("MediaStore insert failed")
+                context.contentResolver.openOutputStream(uri)?.use { it.write(report.toByteArray()) }
+                Toast.makeText(context, "Informe guardado en Descargas/$name", Toast.LENGTH_LONG).show()
+            } else {
+                val dir = context.getExternalFilesDir(null) ?: context.filesDir
+                val file = File(dir, name).apply { writeText(report) }
+                Toast.makeText(context, "Informe guardado en ${file.absolutePath}", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Throwable) {
+            Toast.makeText(context, "No se pudo guardar: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /** Opens the Android share sheet (Bluetooth, messaging apps…) with the report as a .txt file. */
+    fun shareReport(
+        context: Context,
+        radioStation: String?,
+        isRadioActive: Boolean,
+        presets: List<String>
+    ) {
+        try {
+            val report = buildFullReport(context, radioStation, isRadioActive, presets)
+            val file = File(context.cacheDir, reportFileName()).apply { writeText(report) }
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, "Informe de radio - Car Launcher")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val chooser = Intent.createChooser(send, "Compartir informe").apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(chooser)
+        } catch (e: Throwable) {
+            Toast.makeText(context, "No se pudo compartir: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 }

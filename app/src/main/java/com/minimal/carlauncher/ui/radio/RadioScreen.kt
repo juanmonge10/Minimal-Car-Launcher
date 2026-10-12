@@ -28,11 +28,17 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +81,8 @@ fun RadioScreen(
     onFineTune: (Double) -> Unit,
     onSelectPreset: (String, Int) -> Unit,
     onSavePreset: (Int) -> Unit,
+    onRemovePreset: (Int) -> Unit,
+    onAddPreset: () -> Unit,
     onOpenExternalApp: () -> Unit,
     onChooseExternalApp: () -> Unit,
     onShowDiagnostic: () -> Unit,
@@ -166,6 +174,7 @@ fun RadioScreen(
                         PresetGrid(
                             presets, presetNames, frequency, columns = 3,
                             onSelectPreset = onSelectPreset, onSavePreset = onSavePreset,
+                            onRemovePreset = onRemovePreset, onAddPreset = onAddPreset,
                             modifier = Modifier.weight(1f).fillMaxHeight()
                         )
                     }
@@ -181,6 +190,7 @@ fun RadioScreen(
                         PresetGrid(
                             presets, presetNames, frequency, columns = 4,
                             onSelectPreset = onSelectPreset, onSavePreset = onSavePreset,
+                            onRemovePreset = onRemovePreset, onAddPreset = onAddPreset,
                             modifier = Modifier.fillMaxWidth().weight(1f)
                         )
                     }
@@ -189,7 +199,7 @@ fun RadioScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = "Toca una presintonía para sintonizar · mantenla pulsada para guardar la emisora actual · " +
+                text = "Toca una presintonía para sintonizar · mantenla pulsada para reemplazarla o eliminarla · " +
                         "mantén pulsado el botón de app para elegir otra app de radio",
                 fontSize = 12.sp,
                 color = TextMuted,
@@ -268,66 +278,120 @@ private fun PresetGrid(
     columns: Int,
     onSelectPreset: (String, Int) -> Unit,
     onSavePreset: (Int) -> Unit,
+    onRemovePreset: (Int) -> Unit,
+    onAddPreset: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        presets.indices.chunked(columns).forEach { rowIndices ->
-            Row(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                rowIndices.forEach { index ->
-                    val preset = presets[index]
-                    val name = presetNames.getOrNull(index).orEmpty()
-                    val isEmpty = preset.isBlank()
-                    val isCurrent = !isEmpty && currentFrequency == preset
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(if (isCurrent) AccentCyan else CarSurface)
-                            .border(
-                                1.dp,
-                                if (isEmpty) CarBorder else Color.Transparent,
-                                RoundedCornerShape(16.dp)
+    // Only saved presets are shown, plus one "+" cell while there is a free slot
+    val saved = presets.withIndex().filter { it.value.isNotBlank() }.map { it.index }
+    val cells: List<Int?> = if (saved.size < presets.size) saved + listOf(null) else saved
+
+    BoxWithConstraints(modifier = modifier) {
+        val gap = 10.dp
+        val rows = (cells.size + columns - 1) / columns
+        val cellHeight = minOf((maxHeight - gap * (rows - 1)) / rows, 96.dp)
+
+        Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+            cells.chunked(columns).forEach { rowCells ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(cellHeight),
+                    horizontalArrangement = Arrangement.spacedBy(gap)
+                ) {
+                    rowCells.forEach { index ->
+                        val cellModifier = Modifier.weight(1f).fillMaxHeight()
+                        if (index == null) {
+                            AddPresetCell(onAddPreset, cellModifier)
+                        } else {
+                            PresetCell(
+                                frequency = presets[index],
+                                label = presetNames.getOrNull(index).orEmpty()
+                                    .ifBlank { "P${index + 1}" },
+                                isCurrent = currentFrequency == presets[index],
+                                onClick = { onSelectPreset(presets[index], index) },
+                                onSaveHere = { onSavePreset(index) },
+                                onRemove = { onRemovePreset(index) },
+                                modifier = cellModifier
                             )
-                            .combinedClickable(
-                                onClick = { onSelectPreset(preset, index) },
-                                onLongClick = { onSavePreset(index) }
-                            )
-                            .padding(horizontal = 8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = if (isEmpty) "+" else preset,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = when {
-                                isCurrent -> Color.White
-                                isEmpty -> TextMuted
-                                else -> TextPrimary
-                            },
-                            maxLines = 1
-                        )
-                        Text(
-                            text = when {
-                                isEmpty -> "Mantén para guardar"
-                                name.isNotBlank() -> name
-                                else -> "P${index + 1}"
-                            },
-                            fontSize = 12.sp,
-                            color = if (isCurrent) Color.White.copy(alpha = 0.85f) else TextSecondary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        }
                     }
+                    // Keep cell widths equal on a short last row
+                    repeat(columns - rowCells.size) { Spacer(modifier = Modifier.weight(1f)) }
                 }
-                // Keep cell widths equal on a short last row
-                repeat(columns - rowIndices.size) { Spacer(modifier = Modifier.weight(1f)) }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun PresetCell(
+    frequency: String,
+    label: String,
+    isCurrent: Boolean,
+    onClick: () -> Unit,
+    onSaveHere: () -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(16.dp))
+                .background(if (isCurrent) AccentCyan else CarSurface)
+                .combinedClickable(onClick = onClick, onLongClick = { menuOpen = true })
+                .padding(horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = frequency,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isCurrent) Color.White else TextPrimary,
+                maxLines = 1
+            )
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                color = if (isCurrent) Color.White.copy(alpha = 0.85f) else TextSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            DropdownMenuItem(
+                text = { Text("Guardar la emisora actual aquí") },
+                onClick = { menuOpen = false; onSaveHere() }
+            )
+            DropdownMenuItem(
+                text = { Text("Eliminar") },
+                onClick = { menuOpen = false; onRemove() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddPresetCell(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .border(1.dp, CarBorder, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(Icons.Default.Add, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(26.dp))
+        Text(
+            text = "Guardar emisora actual",
+            fontSize = 12.sp,
+            color = TextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

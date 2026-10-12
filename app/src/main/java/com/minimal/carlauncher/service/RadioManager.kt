@@ -608,6 +608,12 @@ class RadioManager(private val context: Context) {
         _presetNames.value = repository.getRadioPresetNames()
     }
 
+    fun removePreset(index: Int) {
+        repository.setSavedRadioStation(index, "", "")
+        _savedStations.value = repository.getSavedRadioStations()
+        _presetNames.value = repository.getRadioPresetNames()
+    }
+
     private val cachedDynamicReceivers = mutableListOf<ComponentName>()
     @Volatile
     private var hasCachedTargets = false
